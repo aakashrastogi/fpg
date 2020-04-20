@@ -7,6 +7,7 @@ mailto: znliu19@mails.jlu.edu.cn / zhining.liu@outlook.com
 
 import numpy as np
 import sklearn
+import scipy.sparse as sp
 from sklearn.tree import DecisionTreeClassifier
 import warnings
 warnings.filterwarnings("ignore")
@@ -20,7 +21,8 @@ class SelfPacedEnsemble():
 
     base_estimator : object, optional (default=sklearn.Tree.DecisionTreeClassifier())
         The base estimator to fit on self-paced under-sampled subsets of the dataset. 
-        NO need to support sample weighting. 
+        NO need to sup
+        port sample weighting.
         Built-in `fit()`, `predict()`, `predict_proba()` methods are required.
 
     hardness_func :  function, optional 
@@ -107,7 +109,7 @@ class SelfPacedEnsemble():
         np.random.seed(self._random_state)
         idx = np.random.choice(X_maj.shape[0], X_min.shape[0], replace=False)
         X_train = np.concatenate([X_maj[idx].toarray(), X_min.toarray()])
-        y_train = np.concatenate([y_maj[idx], y_min])
+        y_train = np.concatenate([y_maj[idx], y_min])##y_train: [0 1]
         return X_train, y_train
 
     def _self_paced_under_sampling(self, 
@@ -157,8 +159,13 @@ class SelfPacedEnsemble():
             y_train_maj = np.full(X_train_maj.shape[0], y_maj[0])
             print(X_train_maj.shape)
             print(X_min.shape)
-            X_train = np.vstack([X_train_maj, X_min])
-            y_train = np.vstack([y_train_maj, y_min])
+            # Handle sparse matrix
+            if sp.issparse(X_min):
+                X_train = sp.vstack([sp.csr_matrix(X_train_maj), X_min])
+            else:
+                X_train = np.vstack([X_train_maj, X_min])
+
+            y_train = np.hstack([y_train_maj, y_min])
 
         return X_train, y_train
 
@@ -186,12 +193,12 @@ class SelfPacedEnsemble():
         """
         self.estimators_ = []
         # Initialize by spliting majority / minority set
-        X_maj = X[y==label_maj]; y_maj = y[y==label_maj]
-        X_min = X[y==label_min]; y_min = y[y==label_min]
+        X_maj = X[y==label_maj]; y_maj = y[y==label_maj]# 1, 1
+        X_min = X[y==label_min]; y_min = y[y==label_min]#2,2
 
         # Random under-sampling in the 1st round (cold start)
         X_train, y_train = self._random_under_sampling(
-            X_maj, y_maj, X_min, y_min)
+            X_maj, y_maj, X_min, y_min)# (24,104)#(0,1) ymaj:76 values, y_min--> 1value
         self.estimators_.append(
             self._fit_base_estimator(
                 X_train, y_train))
