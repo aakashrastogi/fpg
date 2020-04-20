@@ -109,7 +109,7 @@ class SelfPacedEnsemble():
         np.random.seed(self._random_state)
         idx = np.random.choice(X_maj.shape[0], X_min.shape[0], replace=False)
         X_train = np.concatenate([X_maj[idx].toarray(), X_min.toarray()])
-        y_train = np.concatenate([y_maj[idx], y_min])##y_train: [0 1]
+        y_train = np.concatenate([y_maj[idx], y_min])
         return X_train, y_train
 
     def _self_paced_under_sampling(self, 
@@ -193,12 +193,12 @@ class SelfPacedEnsemble():
         """
         self.estimators_ = []
         # Initialize by spliting majority / minority set
-        X_maj = X[y==label_maj]; y_maj = y[y==label_maj]# 1, 1
-        X_min = X[y==label_min]; y_min = y[y==label_min]#2,2
+        X_maj = X[y==label_maj]; y_maj = y[y==label_maj]
+        X_min = X[y==label_min]; y_min = y[y==label_min]
 
         # Random under-sampling in the 1st round (cold start)
         X_train, y_train = self._random_under_sampling(
-            X_maj, y_maj, X_min, y_min)# (24,104)#(0,1) ymaj:76 values, y_min--> 1value
+            X_maj, y_maj, X_min, y_min)
         self.estimators_.append(
             self._fit_base_estimator(
                 X_train, y_train))
